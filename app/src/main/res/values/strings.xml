@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">NothingLand</string>
+    <string name="cover">cover</string>
+    <string name="pause_play">pause/play</string>
+    <string name="next">next</string>
+    <string name="back">back</string>
+    <string name="welcome">Welcome</string>
+    <string name="to_get_started_the_app_needs_some_required_permissions">To get started, the app needs some required permissions</string>
+    <string name="draw_over_other_apps">Draw over other apps</string>
+    <string name="notification_access">Notification Access</string>
+    <string name="record_audio_from_apps">Record Audio from apps</string>
+    <string name="enable_smart_edge">Enable Nothing Land</string>
+    <string name="enable_hardware_acceleration">Enable Hardware Acceleration</string>
+    <string name="access_description">Turn on to let the app draw over status bar</string>
+    <string name="x_offset">X offset</string>
+    <string name="y_offset">Y offset</string>
+    <string name="height_of_overlay_when_shrinked">Height of overlay when shrinked</string>
+    <string name="minimum_width_of_overlay_when_closed">Minimum Width of overlay when closed</string>
+    <string name="space_between_icons_when_overlay_is_shrinked">Space between icons when overlay is shrinked</string>
+    <string name="reset">Reset</string>
+    <string name="select_applications_to_allow">Select applications to allow</string>
+    <string name="all">all</string>
+    <string name="needed_to_show_notifications_and_media_sessions">Needed to show notifications and media sessions</string>
+    <string name="needed_to_show_song_visualizer_never_to_be_used_for_recording_mic_audio">Needed to show song visualizer. Never to be used for recording mic audio</string>
+    <string name="select_color_to_apply_to_background">Select color to apply to background</string>
+    <string name="color_hex">Color (hex)</string>
+    <string name="apply">Apply</string>
+</resources>
