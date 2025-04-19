@@ -35,13 +35,18 @@ public class AppearanceActivity extends AppCompatActivity {
         Objects.requireNonNull(getSupportActionBar()).setDefaultDisplayHomeAsUpEnabled(true);
         SharedPreferences sharedPreferences = getSharedPreferences(getPackageName(), MODE_PRIVATE);
         TextInputLayout t = findViewById(R.id.textField);
+        TextInputLayout t2 = findViewById(R.id.textField2);
+
         Objects.requireNonNull(t.getEditText()).setText(intToHex(sharedPreferences.getInt("color", getColor(R.color.black))));
+        Objects.requireNonNull(t2.getEditText()).setText(intToHex(sharedPreferences.getInt("Allaccent_color", getColor(R.color.md_theme_dark_inversePrimary))));
         findViewById(R.id.apply_btn).setOnClickListener(l -> {
             String value = null;
-            if (Objects.requireNonNull(t.getEditText()).getText() != null)
-                value = "#" + t.getEditText().getText().toString();
+            String AllaccentColorValue = null;
+            if (Objects.requireNonNull(t.getEditText()).getText() != null && Objects.requireNonNull(t2.getEditText()).getText() != null)
+                value = "#" + t.getEditText().getText().toString();AllaccentColorValue = "#" + t2.getEditText().getText().toString();
             if (value != null) {
                 if (isValidColor(value)) {
+
                     t.setError(null);
                     t.setErrorEnabled(false);
                     try {
@@ -51,10 +56,12 @@ public class AppearanceActivity extends AppCompatActivity {
                     }
                     try {
                         int color = Color.parseColor(value);
-                        sharedPreferences.edit().putInt("color", color).apply();
+                        int AllaccentColor = Color.parseColor(AllaccentColorValue);
+                        sharedPreferences.edit().putInt("color", color).putInt("Allaccent_color", AllaccentColor).apply();
                         Snackbar.make(this, findViewById(R.id.textField), "Successfully updated color", Snackbar.LENGTH_SHORT).show();
                         Intent intent = new Intent(getPackageName() + ".COLOR_CHANGED");
                         intent.putExtra("color", color);
+                        intent.putExtra("Allaccent_color", AllaccentColor);
                         sendBroadcast(intent);
                     } catch (Exception e) {
                         t.setErrorEnabled(true);
@@ -70,6 +77,7 @@ public class AppearanceActivity extends AppCompatActivity {
                 t.setError("Please provide a hexadecimal value");
             }
         });
+
     }
 
     private boolean isValidColor(String value) {

@@ -4,6 +4,7 @@
     package="com.theglitchh.NothingLand">
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
@@ -41,7 +42,7 @@
         <activity
             android:name=".activities.MainActivity"
             android:exported="true"
-            android:hardwareAccelerated="false">
+            android:hardwareAccelerated="true">
             <intent-filter>
                 <category android:name="android.intent.category.LAUNCHER" />
                 <action android:name="android.intent.action.MAIN" />

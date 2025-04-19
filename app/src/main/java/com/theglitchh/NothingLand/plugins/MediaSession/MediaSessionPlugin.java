@@ -5,8 +5,12 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -47,6 +51,20 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class MediaSessionPlugin extends BasePlugin {
+
+    private BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent != null && intent.getAction() != null) {
+                if (intent.getAction().equals(ctx.getPackageName() + ".COLOR_CHANGED")) {
+                    // Handle color change, update UI or settings accordingly
+                    int newColor = intent.getIntExtra("Allaccent_color", Color.RED);
+                    // Example: update the visualizer's color
+                    visualizer.setColor(newColor);
+                }
+            }
+        }
+        };
 
     private SeekBar seekBar;
     private TextView elapsedView;
@@ -144,11 +162,15 @@ public class MediaSessionPlugin extends BasePlugin {
         if (mCurrent.getMetadata() == null) return;
         Bitmap bm = mCurrent.getMetadata().getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);
         if (bm == null) return;
-        int dc = getDominantColor(bm);
-        if (isColorDark(dc)) {
+        //int dc = getDominantColor(bm, ctx);
+        //if (isColorDark(dc)) {
             //dc = lightenColor(dc);
-        }
-        visualizer.setColor(dc);
+        //}
+
+        SharedPreferences prefs = ctx.getSharedPreferences(ctx.getPackageName(), Context.MODE_PRIVATE);
+        IntentFilter filter = new IntentFilter(ctx.getPackageName() + ".COLOR_CHANGED");
+        ctx.registerReceiver(receiver, filter);
+        visualizer.setColor( prefs.getInt("Allaccent_color", Color.RED));
     }
 
     private int lightenColor(int colorin) {
@@ -182,11 +204,15 @@ public class MediaSessionPlugin extends BasePlugin {
         }, 60 * 1000);
     }
 
-    public static int getDominantColor(Bitmap bitmap) {
+    public static int getDominantColor(Bitmap bitmap, Context ctx) {
         Bitmap newBitmap = Bitmap.createScaledBitmap(bitmap, 1, 1, true);
         final int color = newBitmap.getPixel(0, 0);
         newBitmap.recycle();
-        return Color.parseColor("#ff0000");
+        SharedPreferences prefs = ctx.getSharedPreferences(ctx.getPackageName(), Context.MODE_PRIVATE);
+        return prefs.getInt("Allaccent_color", Color.RED);
+
+
+
     }
 
     @Override

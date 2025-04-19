@@ -80,6 +80,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
                 startActivity(new Intent(MainActivity.this, OverlayLayoutSettingActivity.class));
             }
         });
+
         settings.add(new SettingStruct("Overlay color", "App Settings", SettingStruct.TYPE_CUSTOM) {
             @Override
             public void onClick(Context ctx) {

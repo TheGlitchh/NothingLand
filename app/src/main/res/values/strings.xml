@@ -25,4 +25,5 @@
     <string name="select_color_to_apply_to_background">Select color to apply to background</string>
     <string name="color_hex">Color (hex)</string>
     <string name="apply">Apply</string>
+    <string name="accent_color_set">Set Accent Color (hex)</string>
 </resources>

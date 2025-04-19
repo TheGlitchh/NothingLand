@@ -1,4 +1,5 @@
 package com.theglitchh.NothingLand.plugins.BatteryPlugin;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -23,6 +24,20 @@ import com.theglitchh.NothingLand.views.BatteryImageView;
 import java.util.ArrayList;
 
 public class BatteryPlugin extends BasePlugin {
+
+    private BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent != null && intent.getAction() != null) {
+                if (intent.getAction().equals(ctx.getPackageName() + ".COLOR_CHANGED")) {
+                    // Handle color change, update UI or settings accordingly
+                    int newColor = intent.getIntExtra("Allaccent_color", Color.RED);
+                    // Example: update the visualizer's color
+                    tv.setTextColor(newColor);
+                }
+            }
+        }
+    };
     @Override
     public String getID() {
         return "BatteryPlugin";
@@ -106,15 +121,18 @@ public class BatteryPlugin extends BasePlugin {
         if (mView != null) {
             tv.setText((int) batteryPercent + "%");
             batteryImageView.updateBatteryPercent(batteryPercent);
+            SharedPreferences prefs = ctx.getSharedPreferences(ctx.getPackageName(), Context.MODE_PRIVATE);
+            IntentFilter filter = new IntentFilter(ctx.getPackageName() + ".COLOR_CHANGED");
+            ctx.registerReceiver(receiver, filter);
             if (batteryPercent > 80) {
-                batteryImageView.setStrokeColor(Color.RED);
-                tv.setTextColor(Color.RED);
+                batteryImageView.setStrokeColor(prefs.getInt("Allaccent_color", Color.RED));
+                tv.setTextColor(prefs.getInt("Allaccent_color", Color.RED));
             } else if (batteryPercent < 80 && batteryPercent > 20) {
-                batteryImageView.setStrokeColor(Color.RED);
-                tv.setTextColor(Color.RED);
+                batteryImageView.setStrokeColor(prefs.getInt("Allaccent_color", Color.RED));
+                tv.setTextColor(prefs.getInt("Allaccent_color", Color.RED));
             } else {
-                batteryImageView.setStrokeColor(Color.RED);
-                tv.setTextColor(Color.RED);
+                batteryImageView.setStrokeColor(prefs.getInt("Allaccent_color", Color.RED));
+                tv.setTextColor(prefs.getInt("Allaccent_color", Color.RED));
             }
         }
     }
