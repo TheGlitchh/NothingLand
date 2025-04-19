@@ -27,7 +27,7 @@ public class PermissionActivity extends AppCompatActivity {
             }
             startActivity(new Intent(
                     "android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"));
-            Toast.makeText(this, "Please select Smart Edge", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Please select NothingLand", Toast.LENGTH_LONG).show();
         });
         findViewById(R.id.record_audio).setOnClickListener(l -> {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {

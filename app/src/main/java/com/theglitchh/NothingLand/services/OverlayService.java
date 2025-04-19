@@ -175,9 +175,9 @@ public class OverlayService extends AccessibilityService {
             if (sharedPreferences.getBoolean("clip_copy_enabled", true)) {
                 ClipboardManager clipboard = (ClipboardManager)
                         getSystemService(Context.CLIPBOARD_SERVICE);
-                ClipData clip = ClipData.newPlainText("smart edge error log", throwable.getMessage() + " : " + Arrays.toString(throwable.getStackTrace()));
+                ClipData clip = ClipData.newPlainText("NothingLand error log", throwable.getMessage() + " : " + Arrays.toString(throwable.getStackTrace()));
                 clipboard.setPrimaryClip(clip);
-                Toast.makeText(this, "Smart Edge Crashed, logs copied to clipboard", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "NothingLand Crashed, logs copied to clipboard", Toast.LENGTH_SHORT).show();
             }
             Runtime.getRuntime().exit(0);
         });

@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
             if (sharedPreferences.getBoolean("clip_copy_enabled", true)) {
                 ClipboardManager clipboard = (ClipboardManager)
                         getSystemService(Context.CLIPBOARD_SERVICE);
-                ClipData clip = ClipData.newPlainText("smart edge error log", throwable.getMessage() + " : " + Arrays.toString(throwable.getStackTrace()));
+                ClipData clip = ClipData.newPlainText("NothingLand error log", throwable.getMessage() + " : " + Arrays.toString(throwable.getStackTrace()));
                 clipboard.setPrimaryClip(clip);
                 sendCrashNotification();
             }
@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
         enable_btn.setOnClickListener(l -> {
             Intent intent = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
             startActivity(intent);
-            Toast.makeText(this, "Installed Apps -> Smart Edge", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Installed Apps -> NothingLand", Toast.LENGTH_SHORT).show();
         });
         settings.add(new SettingStruct("Manage Overlay Layout", "App Settings", SettingStruct.TYPE_CUSTOM) {
             @Override
@@ -322,7 +322,7 @@ public class MainActivity extends AppCompatActivity implements SharedPreferences
 
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
         Notification notification = notificationBuilder.setOngoing(false)
-                .setContentTitle("Smart Edge Crashed")
+                .setContentTitle("NothingLand Crashed")
                 .setContentText("Crash Log copied to clipboard")
                 .setSmallIcon(R.drawable.launcher_foreground)
                 .setPriority(NotificationManager.IMPORTANCE_MAX)

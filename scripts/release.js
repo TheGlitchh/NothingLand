@@ -34,32 +34,25 @@ const versionName = gradleBuild
     }
     const data = await octokit.rest.repos.createRelease({
         owner: "theglitchh",
-        repo: "smart-edge",
+        repo: "NothingLand",
         tag_name: versionCode,
         name: "v" + versionName,
         body: text,
     });
     const fdata = await octokit.rest.repos.uploadReleaseAsset({
         owner: "theglitchh",
-        repo: "smart-edge",
+        repo: "NothingLand",
         name: "release.apk",
         body: "Automatic Build",
         data: fs.readFileSync(build_path),
         release_id: data.data.id,
     });
     const base_md = [
-        `# Smart Edge (Early Access) [![Build & Publish Debug APK](https://github.com/theglitchh/smart-edge/actions/workflows/release.yml/badge.svg)](https://github.com/theglitchh/smart-edge/actions/workflows/release.yml)
-  Alternative to dynamic island for android.`,
-        `# Donations
-  Help support the project by donating ❤️
-  
-  <a href="https://paypal.me/devtheglitchh">
-    <img width="300" src="https://raw.githubusercontent.com/stefan-niedermann/paypal-donate-button/master/paypal-donate-button.png" alt="Donate with PayPal" />
-  </a>`,
+        `# NothingLand (Early Access) [![Build & Publish Debug APK](https://github.com/theglitchh/NothingLand/actions/workflows/release.yml/badge.svg)](https://github.com/theglitchh/NothingLand/actions/workflows/release.yml)`,
     ];
     const downloadsmd = `# Downloads
 
-  [![Download Button](https://img.shields.io/github/v/release/theglitchh/smart-edge?color=7885FF&label=Android-Apk&logo=android&style=for-the-badge)](${fdata.data.browser_download_url})`;
+  [![Download Button](https://img.shields.io/github/v/release/theglitchh/NothingLand?color=7885FF&label=Android-Apk&logo=android&style=for-the-badge)](${fdata.data.browser_download_url})`;
     const previewsMd = [`\n# Previews`];
     const screenshots = fs.readdirSync(
         process.cwd() + "/fastlane/metadata/android/en-US/images/phoneScreenshots"

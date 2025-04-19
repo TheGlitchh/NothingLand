@@ -69,7 +69,7 @@ public class UpdaterService extends Service {
         registerReceiver(broadcastReceiver, new IntentFilter(getPackageName() + ".START_UPDATE"));
         int VERSION_CODE = BuildConfig.VERSION_CODE;
         String baseUrl = "https://api.github.com/";
-        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.GET, baseUrl + "repos/theglitchh/smart-edge/releases",
+        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.GET, baseUrl + "repos/theglitchh/NothingLand/releases",
                 null, response -> {
             if (response.length() > 0) {
                 try {
@@ -123,7 +123,7 @@ public class UpdaterService extends Service {
 
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
         Notification notification = notificationBuilder.setOngoing(ongoing)
-                .setContentTitle("Smart Edge")
+                .setContentTitle("NothingLand")
                 .setContentText(text)
                 .setSmallIcon(R.drawable.launcher_foreground)
                 .setPriority(priority)
@@ -199,7 +199,7 @@ public class UpdaterService extends Service {
                     .setSmallIcon(R.drawable.launcher_foreground)
                     .setPriority(NotificationManager.IMPORTANCE_MIN)
                     .setCategory(Notification.CATEGORY_PROGRESS)
-                    .setContentTitle("Smart Edge")
+                    .setContentTitle("NothingLand")
                     .setContentText("Downloading update")
                     .setProgress(100, Integer.parseInt(String.valueOf(progress[0])), false);
 

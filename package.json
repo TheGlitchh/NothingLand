@@ -1,8 +1,8 @@
 {
-  "name": "smart-edge",
+  "name": "nothingland",
   "version": "1.0.0",
   "main": "index.js",
-  "repository": "https://github.com/theglitchh/smart-edge.git",
+  "repository": "https://github.com/theglitchh/NothingLand.git",
   "author": "theglitchh",
   "license": "MIT",
   "dependencies": {
