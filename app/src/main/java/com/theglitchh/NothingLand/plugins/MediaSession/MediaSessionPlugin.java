@@ -15,11 +15,14 @@ import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.RenderEffect;
+import android.graphics.Shader;
 import android.graphics.drawable.AnimatedVectorDrawable;
 import android.media.MediaMetadata;
 import android.media.session.MediaController;
 import android.media.session.MediaSessionManager;
 import android.media.session.PlaybackState;
+import android.os.Build;
 import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
@@ -52,7 +55,7 @@ import java.util.Optional;
 
 public class MediaSessionPlugin extends BasePlugin {
 
-    private BroadcastReceiver receiver = new BroadcastReceiver() {
+    private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent != null && intent.getAction() != null) {
@@ -170,7 +173,7 @@ public class MediaSessionPlugin extends BasePlugin {
         SharedPreferences prefs = ctx.getSharedPreferences(ctx.getPackageName(), Context.MODE_PRIVATE);
         IntentFilter filter = new IntentFilter(ctx.getPackageName() + ".COLOR_CHANGED");
         ctx.registerReceiver(receiver, filter);
-        visualizer.setColor( prefs.getInt("Allaccent_color", Color.RED));
+       // visualizer.setColor( prefs.getInt("Allaccent_color", Color.RED));
     }
 
     private int lightenColor(int colorin) {
@@ -208,8 +211,8 @@ public class MediaSessionPlugin extends BasePlugin {
         Bitmap newBitmap = Bitmap.createScaledBitmap(bitmap, 1, 1, true);
         final int color = newBitmap.getPixel(0, 0);
         newBitmap.recycle();
-        SharedPreferences prefs = ctx.getSharedPreferences(ctx.getPackageName(), Context.MODE_PRIVATE);
-        return prefs.getInt("Allaccent_color", Color.RED);
+
+        return 0;
 
 
 
@@ -228,11 +231,18 @@ public class MediaSessionPlugin extends BasePlugin {
             x.registerCallback(c);
         });
     };
+    public void applyBlur(View mView) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            RenderEffect blurEffect = RenderEffect.createBlurEffect(80f, 80f, Shader.TileMode.CLAMP);
+            mView.setRenderEffect(blurEffect);
+        }
 
+    }
     @Override
     public void onCreate(OverlayService context) {
         ctx = context;
         mHandler = new Handler(context.getMainLooper());
+
         mView = LayoutInflater.from(context).inflate(R.layout.media_session_layout, null);
         mView.findViewById(R.id.blank_space).setVisibility(View.VISIBLE);
         init();
@@ -254,6 +264,7 @@ public class MediaSessionPlugin extends BasePlugin {
                     x.registerCallback(c);
                 });
     }
+
 
     public void shouldRemoveOverlay() {
         if (getActiveCurrent(mediaSessionManager.getActiveSessions(new ComponentName(ctx, NotiService.class))) == null) {
