@@ -6,6 +6,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -16,12 +17,17 @@ import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.graphics.Rect;
 import android.graphics.Shader;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.renderscript.Allocation;
 import android.renderscript.Element;
 import android.renderscript.RenderScript;
@@ -32,6 +38,7 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
+import android.view.PixelCopy;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
@@ -39,11 +46,13 @@ import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 
 import android.view.animation.OvershootInterpolator;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
+import androidx.core.content.ContextCompat;
 
 import com.theglitchh.NothingLand.plugins.BasePlugin;
 import com.theglitchh.NothingLand.plugins.ExportedPlugins;
@@ -62,7 +71,6 @@ import android.graphics.BlurMaskFilter;
 import android.os.Build;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.FrameLayout;
 public class OverlayService extends AccessibilityService {
     private final ArrayList<BasePlugin> plugins = ExportedPlugins.getPlugins();
     public int minHeight;
@@ -102,16 +110,16 @@ public class OverlayService extends AccessibilityService {
                     mWindowManager.updateViewLayout(mView, mParams);
                 }
             } else if (intent.getAction().equals(getPackageName() + ".COLOR_CHANGED")) {
-                // Get the color from the intent extras
+                int targetColor = 0x80000000;
                 color = intent.getExtras().getInt("color", Color.RED);
 
-                // Check if the color is transparent (#00000000)
-                if (Color.alpha(color) == 0) {
+                if (color == targetColor) {
+                    textColor = isColorDark(color) ? getColor(R.color.white) : getColor(R.color.black);
                     mView.setBackgroundTintList(ColorStateList.valueOf(color));
+
+
+                }  else {
                     textColor = isColorDark(color) ? getColor(R.color.white) : getColor(R.color.black);
-                } else {
-                    textColor = isColorDark(color) ? getColor(R.color.white) : getColor(R.color.black);
-                    // Update the background color of the view
                     if (mView != null) {
                         mView.setBackgroundTintList(ColorStateList.valueOf(color));
                         if (binded_plugin != null) {
@@ -136,17 +144,32 @@ public class OverlayService extends AccessibilityService {
             }
         }
     };
-    @androidx.annotation.RequiresApi(Build.VERSION_CODES.S)
-    private void applyLiveBlur(View blurView) {
-        RenderEffect blurEffect = RenderEffect.createBlurEffect(25f, 25f, Shader.TileMode.CLAMP);
-        blurView.setRenderEffect(blurEffect);
-        blurView.setVisibility(View.VISIBLE);
-    }
 
-    @androidx.annotation.RequiresApi(Build.VERSION_CODES.S)
-    private void removeLiveBlur(View blurView) {
-        blurView.setRenderEffect(null);
-        blurView.setVisibility(View.GONE);
+    private void removeBlurFromParent(View mView) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            WindowManager.LayoutParams params = (WindowManager.LayoutParams) mView.getLayoutParams();
+
+            // Clear the blur effect by removing the FLAG_BLUR_BEHIND
+            params.flags &= ~WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
+            params.flags &= ~WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
+            // Reset blur radius to default value (or remove it altogether if you prefer)
+            params.setBlurBehindRadius(0); // This can also be any other value you want to use
+
+            // Update the layout params to apply the changes
+            mWindowManager.updateViewLayout(mView, params);
+        }
+    }
+    private void addBlurParent(View mView) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            WindowManager.LayoutParams params = (WindowManager.LayoutParams) mView.getLayoutParams();
+
+            // Enable blur behind with hardcoded radius
+            params.setBlurBehindRadius(80);
+            params.flags |= WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
+            params.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
+            // Update the layout params to apply the effect
+            mWindowManager.updateViewLayout(mView, params);
+        }
     }
     public int x, y;
     private int color;
@@ -168,6 +191,7 @@ public class OverlayService extends AccessibilityService {
                 binded_plugin.onClick();
             } else
                 binded_plugin.onExpand();
+
         } else {
             animateOverlay(minHeight + dpToInt(20), minWidth + dpToInt(20), false, new CallBack(), new CallBack() {
                 @Override
@@ -178,9 +202,14 @@ public class OverlayService extends AccessibilityService {
         }
     }
 
+
     private void shrinkOverlay() {
         if (binded_plugin != null) binded_plugin.onCollapse();
+        //removeBlurFromParent(mView);
+
     }
+
+
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -345,8 +374,15 @@ public class OverlayService extends AccessibilityService {
                 if (Math.abs(deltaX) < MIN_DISTANCE && -deltaY < MIN_DISTANCE) {
                     if (press_start.get() + ViewConfiguration.getLongPressTimeout() > Instant.now().toEpochMilli())
                         if (binded_plugin != null) {
-                            if (sharedPreferences.getBoolean("invert_click", false))
+                            if (sharedPreferences.getBoolean("invert_click", false)){
                                 binded_plugin.onExpand();
+                                //addBlurParent(mView);
+
+                               //applyBlur(mView);
+
+
+                            }
+
                             else binded_plugin.onClick();
                         }
                 }
@@ -364,6 +400,21 @@ public class OverlayService extends AccessibilityService {
     ArrayList<String> queued = new ArrayList<>();
     private BasePlugin binded_plugin;
 
+    public void applyBlur(View mView) {
+        if (mView == null) return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            RenderEffect blurEffect = RenderEffect.createBlurEffect(80f, 80f, Shader.TileMode.CLAMP);
+           mView.findViewById(R.id.main).setRenderEffect(blurEffect);
+        }
+
+    }
+
+    private void removeFakeBlurEffect(View mView) {
+        if (mView != null) {
+            // Remove the fake frosted glass effect
+            mView.setBackgroundColor(Color.TRANSPARENT);
+        }
+    }
     public void enqueue(BasePlugin plugin) {
         if (!queued.contains(plugin.getID())) {
             if (binded_plugin != null && plugins.indexOf(plugin) < plugins.indexOf(binded_plugin)) {
