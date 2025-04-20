@@ -1,0 +1,15 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    <path
+        android:fillColor="@android:color/transparent"
+        android:pathData="M0,0h200v200h-200z" />
+    <group>
+        <!-- Rounded Rectangle Path with 30dp corner radius -->
+        <path
+            android:pathData="M30,0h140c16.569,0 30,13.431 30,30v140c0,16.569 -13.431,30 -30,30h-140c-16.569,0 -30,-13.431 -30,-30v-140c0,-16.569 13.431,-30 30,-30z"
+            android:fillColor="#ffffffff" />
+    </group>
+</vector>
