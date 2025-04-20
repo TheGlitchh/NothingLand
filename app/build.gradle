@@ -75,8 +75,5 @@ dependencies {
     implementation 'com.android.volley:volley:1.2.1'
     implementation 'org.ocpsoft.prettytime:prettytime:5.0.2.Final'
     implementation 'com.airbnb.android:lottie:5.0.3'
-    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.8.10'
-    implementation("com.avito.android:blur-layout:1.1.1")
-
-
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.6.10'
 }
