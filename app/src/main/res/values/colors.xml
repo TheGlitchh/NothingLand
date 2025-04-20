@@ -69,4 +69,5 @@
     <color name="md_theme_dark_onPrimary"> #961117</color>
     <color name="md_theme_dark_primaryContainer">#c1161d</color>
     <color name="md_theme_dark_primary">#d71921</color>
+    <color name="transparent_black">#80000000</color>
 </resources>
