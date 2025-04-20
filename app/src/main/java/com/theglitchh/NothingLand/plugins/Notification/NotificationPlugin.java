@@ -18,6 +18,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
@@ -330,13 +331,45 @@ public class NotificationPlugin extends BasePlugin {
 
     @Override
     public void onRightSwipe() {
-        if (meta != null && !expanded) {
-            Intent i = new Intent(context.getPackageName() + ".ACTION_CLOSE");
-            i.putExtra("id", meta.getId());
-            context.sendBroadcast(i);
-            handleNotificationUpdate(meta.getId());
+        if (meta != null) {
+            // If the notification is expanded, perform a closing animation
+            if (expanded) {
+                // Trigger closing animation for expanded state
+                animateSlideOut(context.metrics.widthPixels); // Full swipe out
+                // You can also add a fade-out effect if needed
+                ObjectAnimator fadeOut = ObjectAnimator.ofFloat(mView, "alpha", 1f, 0f);
+                fadeOut.setDuration(300);
+                fadeOut.start();
+
+                // After the animation, close the notification
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        Intent i = new Intent(context.getPackageName() + ".ACTION_CLOSE");
+                        i.putExtra("id", meta.getId());
+                        context.sendBroadcast(i);
+                        handleNotificationUpdate(meta.getId());
+                    }
+                }, 300); // Delay for animation duration
+            } else {
+                // If the notification is collapsed, just close it immediately
+                Intent i = new Intent(context.getPackageName() + ".ACTION_CLOSE");
+                i.putExtra("id", meta.getId());
+                context.sendBroadcast(i);
+                handleNotificationUpdate(meta.getId());
+            }
         }
     }
+    private void animateSlideOut(float deltaX) {
+        // Ensure we're not moving past the screen width
+        float newX = Math.min(deltaX, context.metrics.widthPixels);
+        mView.setTranslationX(newX);
+
+        // Fade the view as it slides out
+        float alpha = 1 - (deltaX / context.metrics.widthPixels);
+        mView.setAlpha(alpha);
+    }
+
 
     private final CallBack overLayCallBackEnd = new CallBack() {
         @Override
