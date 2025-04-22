@@ -73,7 +73,7 @@ public class SongVisualizer extends View {
     }
 
     private void init() {
-        setColor(Color.parseColor("#00ffff"));
+        setColor(Color.parseColor("#ff0000"));
         paint.setStyle(Paint.Style.FILL);
         paint.setStrokeCap(Paint.Cap.ROUND);
     }
