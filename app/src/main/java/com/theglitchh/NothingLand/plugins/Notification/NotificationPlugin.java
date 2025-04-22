@@ -6,6 +6,8 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -14,6 +16,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
@@ -29,6 +32,7 @@ import android.widget.TextView;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
+import androidx.core.app.NotificationCompat;
 import androidx.viewpager.widget.ViewPager;
 
 import com.theglitchh.NothingLand.activities.NotificationManageActivity;
@@ -267,6 +271,7 @@ public class NotificationPlugin extends BasePlugin {
     @Override
     public View onBind() {
         mView = LayoutInflater.from(context).inflate(R.layout.notification_layout, null);
+
         if (meta == null) {
             context.dequeue(this);
             return mView;
@@ -360,6 +365,21 @@ public class NotificationPlugin extends BasePlugin {
             }
         }
     }
+    @Override
+    public void onSwipeUp() {
+
+
+        if (expanded) {
+            onCollapse();
+        }
+    }
+
+    @Override
+    public void onLeftSwipe() {
+        onCollapse();
+    }
+
+
     private void animateSlideOut(float deltaX) {
         // Ensure we're not moving past the screen width
         float newX = Math.min(deltaX, context.metrics.widthPixels);

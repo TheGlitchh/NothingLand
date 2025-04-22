@@ -45,4 +45,10 @@ public abstract class BasePlugin {
 
     public void onLeftSwipe() {
     }
+    public void onSwipeUp() {
+
+    }
+    public void onSwipeDown() {
+
+    }
 }

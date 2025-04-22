@@ -343,7 +343,7 @@ public class OverlayService extends AccessibilityService {
         } catch (Exception e) {
             Log.d("Error1", e.toString());
         }
-        mView.setOnTouchListener((view, event) -> {
+        mView.findViewById(R.id.main).setOnTouchListener((view, event) -> {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 mHandler.postDelayed(mLongPressed, ViewConfiguration.getLongPressTimeout());
                 press_start.set(Instant.now().toEpochMilli());
@@ -360,34 +360,45 @@ public class OverlayService extends AccessibilityService {
                 x2 = event.getX();
                 float deltaY = y2 - y1;
                 float deltaX = x2 - x1;
+                
                 if (Math.abs(deltaX) > MIN_DISTANCE) {
                     if (binded_plugin != null) {
                         if (deltaX < 0) {
                             binded_plugin.onLeftSwipe();
-                        } else binded_plugin.onRightSwipe();
+                        } else {
+                            binded_plugin.onRightSwipe();
+                        }
                     }
                 }
+                if (-deltaY > MIN_DISTANCE) {
+                    if (binded_plugin != null) {
+                        binded_plugin.onSwipeUp();
+                    }
+                } else if (deltaY > MIN_DISTANCE) {
+                    if (binded_plugin != null) {
+                        binded_plugin.onSwipeDown();
+                    }
+                }
+                if (Math.abs(deltaX) < MIN_DISTANCE && Math.abs(deltaY) < MIN_DISTANCE) {
+                    if (press_start.get() + ViewConfiguration.getLongPressTimeout() > Instant.now().toEpochMilli()) {
+                        if (binded_plugin != null) {
+                            if (sharedPreferences.getBoolean("invert_click", false)) {
+                                binded_plugin.onExpand();
+                                //addBlurParent(mView);
+                            } else {
+                                binded_plugin.onClick(); // Normal click action
+                            }
+                        }
+                    }
+                }
+
+
                 if (-deltaY > MIN_DISTANCE) {
                     shrinkOverlay();
                     return false;
                 }
-                if (Math.abs(deltaX) < MIN_DISTANCE && -deltaY < MIN_DISTANCE) {
-                    if (press_start.get() + ViewConfiguration.getLongPressTimeout() > Instant.now().toEpochMilli())
-                        if (binded_plugin != null) {
-                            if (sharedPreferences.getBoolean("invert_click", false)){
-                                binded_plugin.onExpand();
-                                //addBlurParent(mView);
-
-                               //applyBlur(mView);
-
-
-                            }
-
-                            else binded_plugin.onClick();
-                        }
-                }
-
             }
+
             return false;
         });
         plugins.forEach(x -> {
