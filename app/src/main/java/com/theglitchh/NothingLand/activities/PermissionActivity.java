@@ -1,8 +1,12 @@
 package com.theglitchh.NothingLand.activities;
 
+import static com.theglitchh.NothingLand.activities.AppearanceActivity.IMAGE_PICK_CODE;
+import static com.theglitchh.NothingLand.activities.AppearanceActivity.PERMISSION_REQUEST_CODE;
+
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.widget.CheckBox;
@@ -10,12 +14,14 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.theglitchh.NothingLand.R;
 
 public class PermissionActivity extends AppCompatActivity {
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,6 +41,24 @@ public class PermissionActivity extends AppCompatActivity {
                 return;
             }
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, 101);
+        });
+
+        findViewById(R.id.storage_access).setOnClickListener(l -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                // For Android 13+, request the new permissions
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, "Permissions already granted", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_MEDIA_IMAGES}, IMAGE_PICK_CODE);
+            } else {
+                // For Android 12 and below, use the legacy permission
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, "Permissions already granted", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, IMAGE_PICK_CODE);
+            }
         });
     }
 
@@ -56,7 +80,23 @@ public class PermissionActivity extends AppCompatActivity {
             ((CheckBox) findViewById(R.id.record_audio_checkbox)).setChecked(true);
             checks++;
         }
-        if (checks >= 2) {
+
+        // Check for Storage Permissions (READ_EXTERNAL_STORAGE and ACCESS_MEDIA_LOCATION)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // Android 13+ check for media storage access
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) == PackageManager.PERMISSION_GRANTED) {
+                ((CheckBox) findViewById(R.id.storage_access_checkbox)).setChecked(true);
+                checks++;
+            }
+        } else {
+            // Android 12 and below check for legacy storage permission
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                ((CheckBox) findViewById(R.id.storage_access_checkbox)).setChecked(true);
+                checks++;
+            }
+        }
+
+        if (checks >= 3) {
             finish();
         }
     }
