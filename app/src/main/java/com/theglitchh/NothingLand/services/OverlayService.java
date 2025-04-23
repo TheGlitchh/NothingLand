@@ -19,12 +19,14 @@ import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Outline;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -42,6 +44,7 @@ import android.view.PixelCopy;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.ViewOutlineProvider;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 
@@ -75,13 +78,15 @@ public class OverlayService extends AccessibilityService {
     private final ArrayList<BasePlugin> plugins = ExportedPlugins.getPlugins();
     public int minHeight;
     private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
-
+        // boolean setblurback;
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(Intent.ACTION_USER_PRESENT)) {
                 if (sharedPreferences.getBoolean("enable_on_lockscreen", false)) return;
                 if (mView != null) {
                     mView.setVisibility(View.VISIBLE);
+
+
                 }
             } else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
                 if (sharedPreferences.getBoolean("enable_on_lockscreen", false)) return;
@@ -109,25 +114,44 @@ public class OverlayService extends AccessibilityService {
                     }
                     mWindowManager.updateViewLayout(mView, mParams);
                 }
-            } else if (intent.getAction().equals(getPackageName() + ".COLOR_CHANGED")) {
-                int targetColor = 0x80000000;
-                color = intent.getExtras().getInt("color", Color.RED);
+            } else if (Objects.equals(intent.getAction(), getPackageName() + ".COLOR_CHANGED")) {
+                String uriString = intent.getStringExtra("background_image_uri");
+                View mainView = mView != null ? mView.findViewById(R.id.main) : null;
+                if (uriString != null && mView != null) {
+                    try {
+                        mView.findViewById(R.id.main).setBackgroundTintList(null);
+                        Uri imageUri = Uri.parse(uriString);
+                        Drawable background = Drawable.createFromStream(
+                                getContentResolver().openInputStream(imageUri), uriString);
 
-                if (color == targetColor) {
-                    textColor = isColorDark(color) ? getColor(R.color.white) : getColor(R.color.black);
-                    mView.setBackgroundTintList(ColorStateList.valueOf(color));
-
-
-                }  else {
-                    textColor = isColorDark(color) ? getColor(R.color.white) : getColor(R.color.black);
-                    if (mView != null) {
-                        mView.setBackgroundTintList(ColorStateList.valueOf(color));
-                        if (binded_plugin != null) {
-                            binded_plugin.onTextColorChange();
+                        if (mainView != null) {
+                            mainView.setBackground(background);
+                            applyBlurLite();
                         }
+                    } catch (Exception e) {
+                        Log.e("IMAGE_CHANGED", "Failed to load image URI", e);
                     }
+                }else {
+                    int targetColor = 0x80000000;
+                    color = intent.getExtras().getInt("color", Color.RED);
 
+                    if (color == targetColor) {
+                        textColor = isColorDark(color) ? getColor(R.color.white) : getColor(R.color.black);
+                        mView.findViewById(R.id.main).setBackgroundTintList(ColorStateList.valueOf(color));
+
+
+                    }  else {
+                        textColor = isColorDark(color) ? getColor(R.color.white) : getColor(R.color.black);
+                        if (mView != null) {
+                            mView.findViewById(R.id.main).setBackgroundTintList(ColorStateList.valueOf(color));
+                            if (binded_plugin != null) {
+                                binded_plugin.onTextColorChange();
+                            }
+                        }
+
+                    }
                 }
+
             } else {
                 Bundle settings = intent.getExtras().getBundle("settings");
                 for (String s : settings.keySet()) {
@@ -144,33 +168,6 @@ public class OverlayService extends AccessibilityService {
             }
         }
     };
-
-    private void removeBlurFromParent(View mView) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            WindowManager.LayoutParams params = (WindowManager.LayoutParams) mView.getLayoutParams();
-
-            // Clear the blur effect by removing the FLAG_BLUR_BEHIND
-            params.flags &= ~WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
-            params.flags &= ~WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
-            // Reset blur radius to default value (or remove it altogether if you prefer)
-            params.setBlurBehindRadius(0); // This can also be any other value you want to use
-
-            // Update the layout params to apply the changes
-            mWindowManager.updateViewLayout(mView, params);
-        }
-    }
-    private void addBlurParent(View mView) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            WindowManager.LayoutParams params = (WindowManager.LayoutParams) mView.getLayoutParams();
-
-            // Enable blur behind with hardcoded radius
-            params.setBlurBehindRadius(80);
-            params.flags |= WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
-            params.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
-            // Update the layout params to apply the effect
-            mWindowManager.updateViewLayout(mView, params);
-        }
-    }
     public int x, y;
     private int color;
 
@@ -213,8 +210,11 @@ public class OverlayService extends AccessibilityService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        ConstraintLayout constraintLayout = mView.findViewById(R.id.main);
+        //ConstraintLayout constraintLayout = mView.findViewById(R.id.main);
+        ConstraintLayout mainLayout;
+        mainLayout = mView.findViewById(R.id.main);
         return START_STICKY;
+
     }
 
     public Bundle sharedPreferences = new Bundle();
@@ -296,7 +296,6 @@ public class OverlayService extends AccessibilityService {
 
     @SuppressLint("ClickableViewAccessibility")
     private void init() {
-
         binded_plugin = null;
         int flags = WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH | WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 
@@ -343,7 +342,7 @@ public class OverlayService extends AccessibilityService {
         } catch (Exception e) {
             Log.d("Error1", e.toString());
         }
-        mView.findViewById(R.id.main).setOnTouchListener((view, event) -> {
+        mView.setOnTouchListener((view, event) -> {
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 mHandler.postDelayed(mLongPressed, ViewConfiguration.getLongPressTimeout());
                 press_start.set(Instant.now().toEpochMilli());
@@ -360,7 +359,7 @@ public class OverlayService extends AccessibilityService {
                 x2 = event.getX();
                 float deltaY = y2 - y1;
                 float deltaX = x2 - x1;
-                
+
                 if (Math.abs(deltaX) > MIN_DISTANCE) {
                     if (binded_plugin != null) {
                         if (deltaX < 0) {
@@ -384,7 +383,7 @@ public class OverlayService extends AccessibilityService {
                         if (binded_plugin != null) {
                             if (sharedPreferences.getBoolean("invert_click", false)) {
                                 binded_plugin.onExpand();
-                                //addBlurParent(mView);
+
                             } else {
                                 binded_plugin.onClick(); // Normal click action
                             }
@@ -410,22 +409,6 @@ public class OverlayService extends AccessibilityService {
 
     ArrayList<String> queued = new ArrayList<>();
     private BasePlugin binded_plugin;
-
-    public void applyBlur(View mView) {
-        if (mView == null) return;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            RenderEffect blurEffect = RenderEffect.createBlurEffect(80f, 80f, Shader.TileMode.CLAMP);
-           mView.findViewById(R.id.main).setRenderEffect(blurEffect);
-        }
-
-    }
-
-    private void removeFakeBlurEffect(View mView) {
-        if (mView != null) {
-            // Remove the fake frosted glass effect
-            mView.setBackgroundColor(Color.TRANSPARENT);
-        }
-    }
     public void enqueue(BasePlugin plugin) {
         if (!queued.contains(plugin.getID())) {
             if (binded_plugin != null && plugins.indexOf(plugin) < plugins.indexOf(binded_plugin)) {
@@ -594,11 +577,14 @@ public class OverlayService extends AccessibilityService {
     }
 
     private void bindPlugin() {
+
+        ConstraintLayout mainLayout;
+        mainLayout = mView.findViewById(R.id.main);
         if (queued.size() <= 0) {
             if (binded_plugin != null) binded_plugin.onUnbind();
             closeOverlay();
             return;
-        }
+        }applyBlurToMainView();
         if (binded_plugin != null && Objects.equals(queued.get(0), binded_plugin.getID())) {
             return;
         }
@@ -612,10 +598,10 @@ public class OverlayService extends AccessibilityService {
         if (replace == null) {
             ((ViewGroup) mView).addView(view);
             ConstraintSet constraintSet = new ConstraintSet();
-            constraintSet.clone((ConstraintLayout) mView);
+            constraintSet.clone(mainLayout);
             constraintSet.connect(view.getId(), ConstraintSet.TOP, mView.getId(), ConstraintSet.TOP, 0);
             constraintSet.connect(view.getId(), ConstraintSet.BOTTOM, mView.getId(), ConstraintSet.BOTTOM, 0);
-            constraintSet.applyTo((ConstraintLayout) mView);
+            constraintSet.applyTo(mainLayout);
             params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
             View vGap = mView.findViewById(R.id.blank_space);
             if (vGap != null) {
@@ -631,10 +617,10 @@ public class OverlayService extends AccessibilityService {
         parent.removeView(replace);
         parent.addView(view);
         ConstraintSet constraintSet = new ConstraintSet();
-        constraintSet.clone((ConstraintLayout) mView);
+        constraintSet.clone(mainLayout);
         constraintSet.connect(view.getId(), ConstraintSet.TOP, mView.getId(), ConstraintSet.TOP, 0);
         constraintSet.connect(view.getId(), ConstraintSet.BOTTOM, mView.getId(), ConstraintSet.BOTTOM, 0);
-        constraintSet.applyTo((ConstraintLayout) mView);
+        constraintSet.applyTo(mainLayout);
         params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
         View vGap = mView.findViewById(R.id.blank_space);
         if (vGap != null) {
@@ -645,6 +631,53 @@ public class OverlayService extends AccessibilityService {
         mWindowManager.updateViewLayout(mView, params);
         if (binded_plugin != null) binded_plugin.onBindComplete();
     }
+    private void applyBlurToMainView() {
+        View mainView = mView.findViewById(R.id.main);
+
+
+        mainView.setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline outline) {
+
+                float radius = getResources().getDimension(R.dimen.corner_radius); // 30dp
+                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), radius);
+            }
+        });
+
+
+        mainView.setClipToOutline(true);
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+           // RenderEffect blurEffect = RenderEffect.createBlurEffect(85f, 85f, Shader.TileMode.CLAMP);
+           // mainView.setRenderEffect(blurEffect);
+        }
+    }
+
+    private void applyBlurLite() {
+        View mainView = mView.findViewById(R.id.main);
+
+
+        mainView.setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline outline) {
+
+                float radius = getResources().getDimension(R.dimen.corner_radius); // 30dp
+                outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), radius);
+            }
+        });
+
+
+        mainView.setClipToOutline(true);
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            RenderEffect blurEffect = RenderEffect.createBlurEffect(85f, 85f, Shader.TileMode.CLAMP);
+             mainView.setRenderEffect(blurEffect);
+        }
+    }
+
+
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {

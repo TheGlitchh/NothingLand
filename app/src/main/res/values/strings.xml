@@ -18,6 +18,7 @@
     <string name="minimum_width_of_overlay_when_closed">Minimum Width of overlay when closed</string>
     <string name="space_between_icons_when_overlay_is_shrinked">Space between icons when overlay is shrinked</string>
     <string name="reset">Reset</string>
+    <string name="reset2">Reset the image</string>
     <string name="select_applications_to_allow">Select applications to allow</string>
     <string name="all">all</string>
     <string name="needed_to_show_notifications_and_media_sessions">Needed to show notifications and media sessions</string>
@@ -26,4 +27,6 @@
     <string name="color_hex">Color (hex)</string>
     <string name="apply">Apply</string>
     <string name="accent_color_set">Set Accent Color (hex)</string>
+    <string name="Storage_permission">Requires Storage permission</string>
+    <string name="Storage_perm_desc">With this permission we will set a custom image for the nothing land</string>
 </resources>
