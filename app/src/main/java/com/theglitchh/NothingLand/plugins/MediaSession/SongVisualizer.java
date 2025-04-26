@@ -1,6 +1,11 @@
 package com.theglitchh.NothingLand.plugins.MediaSession;
 
+import static androidx.core.content.ContextCompat.registerReceiver;
+
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -10,24 +15,31 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 
+import com.theglitchh.NothingLand.services.OverlayService;
+
 public class SongVisualizer extends View {
     Visualizer visualizer;
 
     public SongVisualizer(Context context) {
         super(context);
+        this.ctx = (OverlayService) context;
         init();
     }
 
     public SongVisualizer(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
+        this.ctx = (OverlayService) context;
         init();
     }
 
     public SongVisualizer(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        this.ctx = (OverlayService) context;
         init();
     }
 
+    private OverlayService ctx;
+    private int currentColor = Color.BLUE;
     public boolean paused;
     private byte[] bytes;
 
@@ -71,16 +83,39 @@ public class SongVisualizer extends View {
         bytes = null;
         invalidate();
     }
-
     private void init() {
-        setColor(Color.parseColor("#ff0000"));
+        IntentFilter filter = new IntentFilter(ctx.getPackageName() + ".COLOR_CHANGED");
+        ctx.registerReceiver(receiver, filter);
+
+        if (paint.getColor() != currentColor) {
+            setColor(currentColor);
+        }
         paint.setStyle(Paint.Style.FILL);
         paint.setStrokeCap(Paint.Cap.ROUND);
     }
 
-    public void setColor(int Color) {
-        paint.setColor(Color);
+    public void setColor(int color) {
+        if (paint.getColor() != color) {
+            paint.setColor(color);
+            currentColor = color;
+        }
     }
+    public final BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent != null && intent.getAction() != null) {
+                if (intent.getAction().equals(ctx.getPackageName() + ".COLOR_CHANGED")) {
+                    int newColor = intent.getIntExtra("Allaccent_color", Color.RED);
+
+                    // Only update if the new color is different from the current one
+                    if (newColor != currentColor) {
+                        currentColor = newColor;
+                        paint.setColor(newColor);
+                    }
+                }
+            }
+        }
+    };
 
     private final Paint paint = new Paint();
 
