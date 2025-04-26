@@ -104,7 +104,12 @@ public class AppearanceActivity extends AppCompatActivity {
 
         Objects.requireNonNull(t.getEditText()).setText(intToHex(sharedPreferences.getInt("color", getColor(R.color.black))));
         Objects.requireNonNull(t2.getEditText()).setText(intToHex(sharedPreferences.getInt("Allaccent_color", getColor(R.color.md_theme_dark_inversePrimary))));
-        selectedImageUri = Uri.parse(sharedPreferences.getString("background_image_uri", null));
+        String uriString = sharedPreferences.getString("background_image_uri", null);
+        if (uriString != null) {
+            selectedImageUri = Uri.parse(uriString);
+        } else {
+            selectedImageUri = null;
+        }
         findViewById(R.id.apply_btn).setOnClickListener(l -> {
             String value = null;
             String AllaccentColorValue = null;
@@ -180,6 +185,7 @@ public class AppearanceActivity extends AppCompatActivity {
             } catch (SecurityException e) {
                 e.printStackTrace(); // Handle exception
             }
+
             selectedImageView.setVisibility(View.VISIBLE);
             selectedImageView.setImageURI(selectedImageUri);
 
