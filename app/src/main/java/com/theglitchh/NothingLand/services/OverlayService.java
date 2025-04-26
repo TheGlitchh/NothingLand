@@ -10,12 +10,15 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
+import android.database.ContentObserver;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -30,6 +33,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.MediaStore;
 import android.renderscript.Allocation;
 import android.renderscript.Element;
 import android.renderscript.RenderScript;
@@ -66,6 +70,7 @@ import android.graphics.RenderEffect;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
@@ -75,8 +80,10 @@ import android.os.Build;
 import android.view.View;
 import android.view.WindowManager;
 public class OverlayService extends AccessibilityService {
+    private boolean isOverlayHiddenByScreenshot = false;
     private final ArrayList<BasePlugin> plugins = ExportedPlugins.getPlugins();
     public int minHeight;
+
     private final BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
         // boolean setblurback;
         @Override
@@ -92,7 +99,8 @@ public class OverlayService extends AccessibilityService {
                 if (sharedPreferences.getBoolean("enable_on_lockscreen", false)) return;
                 mView.setVisibility(View.INVISIBLE);
             } else if (intent.getAction().equals(getPackageName() + ".OVERLAY_LAYOUT_CHANGE")) {
-                Bundle settings = intent.getExtras().getBundle("settings");
+                Bundle settings = Objects.requireNonNull(intent.getExtras()).getBundle("settings");
+                assert settings != null;
                 for (String s : settings.keySet()) {
                     if (settings.get(s) instanceof Float) {
                         sharedPreferences.putFloat(s, settings.getFloat(s));
@@ -126,14 +134,14 @@ public class OverlayService extends AccessibilityService {
 
                         if (mainView != null) {
                             mainView.setBackground(background);
-                            applyBlurLite();
+                            applyBlurToMainView();
                         }
                     } catch (Exception e) {
                         Log.e("IMAGE_CHANGED", "Failed to load image URI", e);
                     }
                 }else {
                     int targetColor = 0x80000000;
-                    color = intent.getExtras().getInt("color", Color.RED);
+                    color = Objects.requireNonNull(intent.getExtras()).getInt("color", Color.RED);
 
                     if (color == targetColor) {
                         textColor = isColorDark(color) ? getColor(R.color.white) : getColor(R.color.black);
@@ -153,7 +161,8 @@ public class OverlayService extends AccessibilityService {
                 }
 
             } else {
-                Bundle settings = intent.getExtras().getBundle("settings");
+                Bundle settings = Objects.requireNonNull(intent.getExtras()).getBundle("settings");
+                assert settings != null;
                 for (String s : settings.keySet()) {
                     if (settings.get(s) instanceof Boolean) {
                         sharedPreferences.putBoolean(s, settings.getBoolean(s));
@@ -168,6 +177,23 @@ public class OverlayService extends AccessibilityService {
             }
         }
     };
+
+
+    private void hideOverlayOnScreenshot() {
+        if (mView != null && mView.getVisibility() == View.VISIBLE) {
+            Log.d("OverlayService", "Hiding the overlay for screenshot");
+            isOverlayHiddenByScreenshot = true;
+            mView.setVisibility(View.INVISIBLE);
+
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                if (isOverlayHiddenByScreenshot && mView != null) {
+                    mView.setVisibility(View.VISIBLE);
+                    isOverlayHiddenByScreenshot = false;
+                }
+            }, 2500); // Reappear after 2.5 seconds
+        }
+    }
+
     public int x, y;
     private int color;
 
@@ -213,6 +239,7 @@ public class OverlayService extends AccessibilityService {
         //ConstraintLayout constraintLayout = mView.findViewById(R.id.main);
         ConstraintLayout mainLayout;
         mainLayout = mView.findViewById(R.id.main);
+
         return START_STICKY;
 
     }
@@ -296,6 +323,7 @@ public class OverlayService extends AccessibilityService {
 
     @SuppressLint("ClickableViewAccessibility")
     private void init() {
+
         binded_plugin = null;
         int flags = WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH | WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 
@@ -318,6 +346,7 @@ public class OverlayService extends AccessibilityService {
         LayoutInflater layoutInflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         getBaseContext().setTheme(R.style.Theme_TheGlitchh);
         mView = layoutInflater.inflate(R.layout.overlay_layout, null);
+
 
         ctx = DynamicColors.wrapContextIfAvailable(getBaseContext(), com.google.android.material.R.style.ThemeOverlay_Material3_DynamicColors_DayNight);
         mParams.gravity = Gravity.TOP | Gravity.CENTER;
@@ -342,7 +371,17 @@ public class OverlayService extends AccessibilityService {
         } catch (Exception e) {
             Log.d("Error1", e.toString());
         }
+        applyBlurToMainView();
+
         mView.setOnTouchListener((view, event) -> {
+            int action = event.getActionMasked();
+            if (action == MotionEvent.ACTION_POINTER_DOWN) {
+                if (event.getPointerCount() == 3) {
+                   // hideOverlayOnScreenshot();
+
+                }
+            }
+
             if (event.getAction() == MotionEvent.ACTION_DOWN) {
                 mHandler.postDelayed(mLongPressed, ViewConfiguration.getLongPressTimeout());
                 press_start.set(Instant.now().toEpochMilli());
@@ -584,7 +623,7 @@ public class OverlayService extends AccessibilityService {
             if (binded_plugin != null) binded_plugin.onUnbind();
             closeOverlay();
             return;
-        }applyBlurToMainView();
+        }//pplyBlurToMainView();
         if (binded_plugin != null && Objects.equals(queued.get(0), binded_plugin.getID())) {
             return;
         }
@@ -649,8 +688,8 @@ public class OverlayService extends AccessibilityService {
 
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-           // RenderEffect blurEffect = RenderEffect.createBlurEffect(85f, 85f, Shader.TileMode.CLAMP);
-           // mainView.setRenderEffect(blurEffect);
+           RenderEffect blurEffect = RenderEffect.createBlurEffect(85f, 85f, Shader.TileMode.CLAMP);
+           mainView.setRenderEffect(blurEffect);
         }
     }
 
@@ -704,6 +743,7 @@ public class OverlayService extends AccessibilityService {
 
 
     private View mView;
+
     public WindowManager mWindowManager;
 
 
