@@ -231,13 +231,6 @@ public class MediaSessionPlugin extends BasePlugin {
             x.registerCallback(c);
         });
     };
-    public void applyBlur(View mView) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            RenderEffect blurEffect = RenderEffect.createBlurEffect(80f, 80f, Shader.TileMode.CLAMP);
-            mView.setRenderEffect(blurEffect);
-        }
-
-    }
     @Override
     public void onCreate(OverlayService context) {
         ctx = context;
